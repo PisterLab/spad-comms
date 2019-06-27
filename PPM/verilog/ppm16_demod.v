@@ -1,5 +1,5 @@
 `timescale 1ps/1ps
-`include "/tools/B/lydialee/camera/SPAD/verilog/PPM/chips.vh"
+`include "/tools/B/lydialee/camera/spad-comms/PPM/verilog/chips.vh"
 /*
     Author: Lydia Lee
     Created: 2019/06/25
@@ -214,7 +214,7 @@ module ppm16_demod #(
                     && max_chip_bit_count
                     && max_symbol_chip_count) next_state = S_PREAMBLE_MATCH2;
                 else if (max_chip_bit_count
-                    && max_symbol_chip_count) next_state = S_IDLE;
+                    && max_symbol_chip_count) next_state = S_SCAN;
             end
             S_PREAMBLE_MATCH2: begin
                 if (max_chip_bit_count
@@ -294,7 +294,7 @@ module ppm16_demod #(
     // Shifting in new bits
     always @(posedge clk or negedge resetn) begin
         if (~resetn) shifted_bits <= {(16*CHIP_BITS){1'b0}};
-        else if (shift_new_bit) shifted_bits <= {shifted_bits[16*CHIP_BITS-1:1], din};
+        else if (shift_new_bit) shifted_bits <= {shifted_bits[16*CHIP_BITS-2:0], din};
     end
     
     // FSM state transition

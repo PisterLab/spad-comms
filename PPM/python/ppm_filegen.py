@@ -7,38 +7,58 @@ import matplotlib.pyplot as plt
 import doctest
 from math import ceil
 
-def ppm_mod(values, chips_per_symbol, bits_per_chip):
-    """
-    Inputs:
-        values: Collection of integers (not bits) to encode. Individual value
-            must not exceed the radix.
-        chips_per_symbol: Number of chips to use for a single symbol in the
-        	PPM encoding.
-        bits_per_chip: Number of bits associated with a single chip. For 
-        	values >1, binary 1 is converted to the max possible (unsigned)
-        	value.
-    Outputs:
-        Returns a flattened array where elements 0 to chips_per_symbol-1 
-        correspond to the PPM form of the 0th element in values, etc.
+def ppm_mod_vals(values, chips_per_symbol, bits_per_chip):
+	"""
+	Inputs:
+		values: Collection of integers (not bits) to encode. Individual value
+			must not exceed the radix.
+		chips_per_symbol: Number of chips to use for a single symbol in the
+			PPM encoding.
+		bits_per_chip: Number of bits associated with a single chip. For 
+			values >1, binary 1 is converted to the max possible (unsigned)
+			value.
+	Outputs:
+		Returns a flattened array where elements 0 to chips_per_symbol-1 
+		correspond to the PPM form of the 0th element in values, etc.
 
-    >>> values = [1, 2, 3]
-    >>> expected_output = [0,0,0,0,1,1,0,0] + [0,0,1,1,0,0,0,0] + [1,1,0,0,0,0,0,0]
-    >>> output = ppm_mod(values, 4, 2)
-    >>> expected_output == list(output)
-    True
-    """
-    mod_values = []
-    for val in values:
-        # Check that the value doesn't exceed the max possible value
-        if val >= chips_per_symbol:
-            raise ValueError("{} > Max {}".format(val, chips_per_symbol))
-        
-        # The value indicates where the high value should go amongst the 0s
-        mod_val = [0]*(chips_per_symbol-val-1)*bits_per_chip \
-        			+ [1]*bits_per_chip \
-        			+ [0]*val*bits_per_chip
-        mod_values.extend(mod_val)
-    return np.asarray(mod_values)
+	>>> values = [1, 2, 3]
+	>>> expected_output = [0,0,0,0,1,1,0,0] + [0,0,1,1,0,0,0,0] + [1,1,0,0,0,0,0,0]
+	>>> output = ppm_mod(values, 4, 2)
+	>>> expected_output == list(output)
+	True
+	"""
+	mod_values = []
+	for val in values:
+		# Check that the value doesn't exceed the max possible value
+		if val >= chips_per_symbol:
+			raise ValueError("{0} > Max {1}".format(val, chips_per_symbol))
+		
+		# The value indicates where the high value should go amongst the 0s
+		mod_val = [0]*(chips_per_symbol-val-1)*bits_per_chip \
+					+ [1]*bits_per_chip \
+					+ [0]*val*bits_per_chip
+		mod_values.extend(mod_val)
+	return np.asarray(mod_values)
+
+def ppm_mod_bits(symbols, chips_per_symbol, bits_per_chip):
+	"""
+	Inputs:
+		symbols: Flattened collection of 0 and 1 where each grouping of
+			bits constitutes a symbol.
+		chips_per_symbol: Number of chips to use for a single symbol in the
+			PPM encoding.
+		bits_per_chip: Number of bits associated with a single chip. For 
+			values >1, binary 1 is converted to the max possible (unsigned)
+			value.
+	Outputs:
+		Returns a flattened array where the symbols have been modulated 
+		using chips_per_symbol-PPM and bits_per_chip.
+	"""
+	bits_per_symbol = int(np.log2(chips_per_symbol))
+	symbols_unflat = [symbols[i*bits_per_symbol : (i+1)*bits_per_symbol] \
+		for i in range((len(symbols)+bits_per_symbol-1)//bits_per_symbol)]
+	values = [int(''.join(map(str,symbol)), 2) for symbol in symbols_unflat]
+	return ppm_mod_vals(values, chips_per_symbol, bits_per_chip)
 
 def rx_uniform(outputFile, num_rows, chips_per_row, bits_per_chip, val=0):
 	"""
@@ -63,7 +83,7 @@ def rx_uniform(outputFile, num_rows, chips_per_row, bits_per_chip, val=0):
 def rx_rand_data(outputFile, num_rows, chips_per_row, chips_per_symbol, bits_per_chip,
 				preamble=[0,0,0,0], sfd0=[0,1,1,1], sfd1=[1,0,1,0],
 				p_version=[0,0,0], p_id=[1]*13, p_seqcontr=[0,1]+[0]*14,
-				p_datalen=[0]*16):
+				p_datalen=[0]*16, mode='rand'):
 	"""
 	Inputs:
 		outputFile: String. Path and name of the file to write to.
@@ -85,6 +105,8 @@ def rx_rand_data(outputFile, num_rows, chips_per_row, chips_per_symbol, bits_per
 		p_seqcontr: List of 1 and 0. Packet sequence control field.
 		p_datalen: List of 1 and 0. (# of octets)-1 in the data length field.
 			Packet data is randomized.
+		mode: String 'rand', 'zero', 'one'. Specifies what goes in the non-packet
+			regions of the transmitted bits.
 	Outputs:
 		No return value. Writes to 'outputFile' with the fully constructed 
 		packet randomly placed somewhere in the file. Format is what the 
@@ -104,17 +126,16 @@ def rx_rand_data(outputFile, num_rows, chips_per_row, chips_per_symbol, bits_per
 	p_datalen_octets_dec = int(p_datalen_octets_str, 2)
 
 	symbols_per_octet = int(ceil(8/np.log2(chips_per_symbol)))
-	chips_per_octet = symbols_per_octet * chips_per_symbol
-	p_datalen_chips = p_datalen_octets_dec * chips_per_octet
-	p_data_chips = np.random.randint(2, size=p_datalen_chips)
-
+	demod_bits_per_symbol = int(np.log2(chips_per_symbol))
+	p_datalen_bits_demod = demod_bits_per_symbol*symbols_per_octet*p_datalen_octets_dec
+	p_data_demod = np.random.randint(2, size=p_datalen_bits_demod)
+	
 	# Constructing the packet first as chips, then converting to bits
-	packet_chips = preamble + preamble + sfd0 + sfd1 + p_version + p_id + \
-		p_seqcontr + p_datalen + list(p_data_chips)
-
+	packet_demod = preamble + preamble + sfd0 + sfd1 + p_version + p_id + \
+		p_seqcontr + p_datalen + list(p_data_demod)
+	packet_chips = ppm_mod_bits(packet_demod, chips_per_symbol, bits_per_chip)
 	packet = np.array([[c]*bits_per_chip for c in packet_chips])
 	packet = packet.flatten()
-	print(packet)
 
 	# Checking that the packet will fit in the size specified
 	total_bits = num_rows*chips_per_row*bits_per_chip
@@ -125,15 +146,20 @@ def rx_rand_data(outputFile, num_rows, chips_per_row, chips_per_symbol, bits_per
 	loc = np.random.randint(total_bits-len(packet))
 	bits_per_row = bits_per_chip*chips_per_row
 
-	print("Start at {}".format(loc))
-
 	with open(outputFile, 'w+') as file:
 		idx = 0
+		write_str = ''
 		while idx < total_bits:
 			if idx >= loc and idx < loc+len(packet):
-				file.write(str(packet[idx-loc]))
+				write_str = str(packet[idx-loc]) 
+			elif mode == 'zero':
+				write_str = '0'
+			elif mode == 'one':
+				write_str = '1'
 			else:
-				file.write(str(np.random.randint(2)))
+				write_str = str(np.random.randint(2)) 
+			
+			file.write(write_str)
 
 			if idx % bits_per_row == bits_per_row-1:
 				file.write('\n')
@@ -142,10 +168,10 @@ def rx_rand_data(outputFile, num_rows, chips_per_row, chips_per_symbol, bits_per
 	return
 
 if __name__ == "__main__":
-	num_rows = 50
+	num_rows = 100
 	chips_per_row = 16
-	chips_per_symbol = 16
-	bits_per_chip = 2
-
-	outputFile = './bleh2.b'
+	chips_per_symbol = 8
+	bits_per_chip = 1
+	
+	outputFile = './bleh.b'
 	rx_rand_data(outputFile, num_rows, chips_per_row, chips_per_symbol, bits_per_chip)

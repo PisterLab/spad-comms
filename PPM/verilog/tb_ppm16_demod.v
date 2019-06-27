@@ -7,16 +7,12 @@
 */
 
 module tb_ppm16_demod();
-    localparam [1:0] ALIGN_ROW = 2'b00;
-    localparam [1:0] ALIGN_CHIP = 2'b01;
-    localparam [1:0] ALIGN_NONE = 2'b10;
     
     /* ------------------------------------ */
     /* ----------- Change These ----------- */
     /* ------------------------------------ */
-    parameter CHIP_BITS = 3;
+    parameter CHIP_BITS = 1;
     parameter CLK_PERIOD = 1000;
-    parameter ALIGNMENT = ALIGN_NONE;
     /* ------------------------------------ */
     /* ------------------------------------ */
     /* ------------------------------------ */
@@ -84,20 +80,16 @@ module tb_ppm16_demod();
                 Purpose is to test for false negatives.
             */
             integer row_count;
-            integer chip_count;
             integer bit_count;
             
             localparam NUM_ROWS        = 100;
             localparam CHIPS_PER_ROW   = 16;
             
-            // 100 rows, each with 16 chips
-            reg [CHIPS_PER_ROW*CHIP_BITS-1:0]       rx_bits_flat [NUM_ROWS-1:0];
-            reg [CHIP_BITS-1:0]                     rx_bits [NUM_ROWS-1:0][CHIPS_PER_ROW-1:0];
-            reg [CHIP_BITS-1:0]                     curr_row [CHIPS_PER_ROW-1:0];
-            reg [CHIP_BITS-1:0]                     curr_chip;
-            reg                                     curr_bit;
+            // Rread as rows of bits
+            reg [CHIPS_PER_ROW*CHIP_BITS-1:0] rx_bits [NUM_ROWS-1:0];
+            reg [CHIPS_PER_ROW*CHIP_BITS-1:0] curr_row ;
+            reg curr_bit;
             
-            string align;
             string chip_bits;
             
             // Input file name based on settings
@@ -106,28 +98,15 @@ module tb_ppm16_demod();
                 1: chip_bits = "1";
             endcase
             
-            case (ALIGNMENT)
-                ALIGN_ROW:  align = "Row";
-                ALIGN_CHIP: align = "Chip";
-                ALIGN_NONE: align = "None";
-            endcase
-            
             // Reading from the file and setting up the file to write results to
-            //$readmemb({"falseNeg_", "chip", chip_bits, "_align", align, ".b"}, rx_bits_flat);
-            // FILE_result = $fopen({"falseNeg_", "chip", chip_bits, "_align", align, "_result.txt"}, "w");
-            $readmemb("/tools/B/lydialee/camera/SPAD/verilog/PPM/bleh.b", rx_bits_flat);
-            FILE_result = $fopen("/tools/B/lydialee/camera/SPAD/verilog/PPM/bleh_result.txt", "w");
-            
-            // Unflattening the bits read from the file
-            for(row_count=0; row_count<NUM_ROWS; row_count=row_count+1) begin
-                for(chip_count=0; chip_count<CHIPS_PER_ROW; chip_count=chip_count+1) begin
-                    rx_bits[row_count][chip_count] = rx_bits_flat[row_count]
-                                                        [CHIP_BITS-1:0];
-                end
-            end
+            $readmemb("/tools/B/lydialee/camera/spad-comms/PPM/verilog/bleh.b", rx_bits);
+            FILE_result = $fopen("/tools/B/lydialee/camera/spad-comms/PPM/verilog/bleh_result.txt", "w");
             
             // Clean startup sequence
-            corr_threshold = 3'b001;
+            @(posedge clk);
+            @(posedge clk);
+            @(posedge clk);
+            corr_threshold = 1'b1;
             @(posedge clk);
             resetn = 1'b0;
             @(posedge clk);
@@ -138,18 +117,19 @@ module tb_ppm16_demod();
             rx_start = 1'b0;
             
             // Feeding the info to the demodulator
-            for(row_count=0; row_count<NUM_ROWS; row_count=row_count+1) begin
-                for(chip_count=0; chip_count<CHIPS_PER_ROW; chip_count=chip_count+1) begin
-                    for(bit_count=0; bit_count<CHIP_BITS; bit_count=bit_count+1) begin
-                        @(posedge clk)
-                        curr_row = rx_bits[row_count];
-                        curr_chip = curr_row[chip_count];
-                        //curr_bit = curr_chip[bit_count];
-                        din = curr_chip[bit_count];
-                    end
+            row_count = 0;
+            while (row_count < NUM_ROWS) begin
+                curr_row = rx_bits[row_count];
+                //$display(rx_bits[row_count]);
+                bit_count = 0;
+                while (bit_count < CHIP_BITS*CHIPS_PER_ROW) begin
+                    curr_bit = curr_row[bit_count];
+                    din = curr_row[bit_count];
+                    @(posedge clk)
+                    bit_count = bit_count + 1;
                 end
+                row_count = row_count + 1;
             end
-            
             $fclose(FILE_result);
         end
     endtask

@@ -73,7 +73,10 @@ def rx_rand_data(outputFile, num_rows, chips_per_row, chips_per_symbol, bits_per
 			https://public.ccsds.org/Pubs/133x0b1c2.pdf
 			for more detail on the packet construction.
 			
-		For the chipping sequence, the LSB comes last. 
+		For the chipping sequence, the LSB comes last.
+		
+		In all of the above (preamble, sfd0, sfd1, etc.) the LSB is on
+		the right and the MSB goes on the leftmost index.
 	"""
 	# Creating random packet data based on specified data length
 	p_datalen_octets_str = ''.join([str(i) for i in p_datalen])
@@ -81,13 +84,15 @@ def rx_rand_data(outputFile, num_rows, chips_per_row, chips_per_symbol, bits_per
 
 	symbols_per_octet = int(ceil(8/np.log2(chips_per_symbol)))
 	demod_bits_per_symbol = int(np.log2(chips_per_symbol))
-	p_datalen_bits_demod = demod_bits_per_symbol*symbols_per_octet*p_datalen_octets_dec
+	p_datalen_bits_demod = demod_bits_per_symbol * symbols_per_octet \
+							* p_datalen_octets_dec
 	p_data_demod = np.random.randint(2, size=p_datalen_bits_demod)
 	
 	# Constructing the packet first as chips, then converting to bits
 	packet_demod = preamble*2 + sfd0 + sfd1 + p_version \
 		+ p_id + p_seqcontr + p_datalen + list(p_data_demod)
-	packet = ppm_mod_bits(packet_demod, chips_per_symbol, bits_per_chip, mode=None)
+	packet = ppm_mod_bits(packet_demod, chips_per_symbol, \
+						bits_per_chip, mode=None)
 	# packet = np.array([[c]*bits_per_chip for c in packet_chips])
 	packet = packet.flatten()
 

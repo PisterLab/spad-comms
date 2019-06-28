@@ -7,7 +7,7 @@
 */
 
 module tb_ppm16_correlator();
-    parameter CHIP_BITS = 3;
+    parameter CHIP_BITS = 1;
     parameter CLK_PERIOD = 1000;
 
     reg                     clk;

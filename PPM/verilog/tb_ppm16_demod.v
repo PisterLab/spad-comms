@@ -104,7 +104,7 @@ module tb_ppm16_demod();
             @(posedge clk);
             @(posedge clk);
             @(posedge clk);
-            corr_threshold = 1'b1;
+            corr_threshold = 2'b10;
             @(posedge clk);
             resetn = 1'b0;
             @(posedge clk);

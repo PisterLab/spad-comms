@@ -1,72 +1,16 @@
 # Lydia Lee
 # Created 2019/06/27
 
+# Code for generating binary files of received bits with or 
+# without PPM packets depending on user specification.
+
 import numpy as np
 import scipy as sp
 import matplotlib.pyplot as plt
 import doctest
 from math import ceil
+from ppm_base import ppm_mod_vals, ppm_mod_bits
 
-def ppm_mod_vals(values, chips_per_symbol, bits_per_chip, mode='rev'):
-	"""
-	Inputs:
-		values: Collection of integers (not bits) to encode. Individual value
-			must not exceed the radix.
-		chips_per_symbol: Number of chips to use for a single symbol in the
-			PPM encoding.
-		bits_per_chip: Number of bits associated with a single chip. For 
-			values >1, binary 1 is converted to the max possible (unsigned)
-			value.
-		mode: 'rev' means the LSB of a symbol goes in the 0th index, otherwise the MSB
-			goes in the 0th index.
-	Outputs:
-		Returns a flattened array where elements 0 to chips_per_symbol-1 
-		correspond to the PPM form of the 0th element in values, etc.
-
-	>>> values = [1, 2, 3]
-	>>> expected_output = [0,0,0,0,1,1,0,0] + [0,0,1,1,0,0,0,0] + [1,1,0,0,0,0,0,0]
-	>>> output = ppm_mod(values, 4, 2, None)
-	>>> expected_output == list(output)
-	True
-	"""
-	mod_values = []
-	for val in values:
-		# Check that the value doesn't exceed the max possible value
-		if val >= chips_per_symbol:
-			raise ValueError("{0} > Max {1}".format(val, chips_per_symbol))
-		
-		# The value indicates where the high value should go amongst the 0s
-		mod_val = [0]*(chips_per_symbol-val-1)*bits_per_chip \
-					+ [1]*bits_per_chip \
-					+ [0]*val*bits_per_chip
-					
-		if mode == 'rev':
-			mod_val = mod_val[::-1]
-			
-		mod_values.extend(mod_val)
-	return np.asarray(mod_values)
-
-def ppm_mod_bits(symbols, chips_per_symbol, bits_per_chip, mode='rev'):
-	"""
-	Inputs:
-		symbols: Flattened collection of 0 and 1 where each grouping of
-			bits constitutes a symbol.
-		chips_per_symbol: Number of chips to use for a single symbol in the
-			PPM encoding.
-		bits_per_chip: Number of bits associated with a single chip. For 
-			values >1, binary 1 is converted to the max possible (unsigned)
-			value.
-		mode: 'rev' means the LSB of a symbol goes in the 0th index, otherwise the MSB
-			goes in the 0th index.
-	Outputs:
-		Returns a flattened array where the symbols have been modulated 
-		using chips_per_symbol-PPM and bits_per_chip.
-	"""
-	bits_per_symbol = int(np.log2(chips_per_symbol))
-	symbols_unflat = [symbols[i*bits_per_symbol : (i+1)*bits_per_symbol] \
-		for i in range((len(symbols)+bits_per_symbol-1)//bits_per_symbol)]
-	values = [int(''.join(map(str,symbol)), 2) for symbol in symbols_unflat]
-	return ppm_mod_vals(values, chips_per_symbol, bits_per_chip, mode=mode)
 
 def rx_uniform(outputFile, num_rows, chips_per_row, bits_per_chip, val=0):
 	"""

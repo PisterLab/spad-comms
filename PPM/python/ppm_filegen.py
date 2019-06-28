@@ -143,8 +143,8 @@ def rx_rand_data(outputFile, num_rows, chips_per_row, chips_per_symbol, bits_per
 	# Constructing the packet first as chips, then converting to bits
 	packet_demod = preamble*2 + sfd0 + sfd1 + p_version \
 		+ p_id + p_seqcontr + p_datalen + list(p_data_demod)
-	packet_chips = ppm_mod_bits(packet_demod, chips_per_symbol, bits_per_chip, mode=None)
-	packet = np.array([[c]*bits_per_chip for c in packet_chips])
+	packet = ppm_mod_bits(packet_demod, chips_per_symbol, bits_per_chip, mode=None)
+	# packet = np.array([[c]*bits_per_chip for c in packet_chips])
 	packet = packet.flatten()
 
 	# Checking that the packet will fit in the size specified
@@ -183,10 +183,10 @@ def rx_rand_data(outputFile, num_rows, chips_per_row, chips_per_symbol, bits_per
 	return
 
 if __name__ == "__main__":
-	num_rows = 100
+	num_rows = 40
 	chips_per_row = 16
 	chips_per_symbol = 16
-	bits_per_chip = 4
+	bits_per_chip = 2
 	
 	outputFile = './bleh.b'
 	rx_rand_data(outputFile, num_rows, chips_per_row, chips_per_symbol, bits_per_chip, mode='one')

@@ -11,7 +11,7 @@ module tb_ppm16_demod();
     /* ------------------------------------ */
     /* ----------- Change These ----------- */
     /* ------------------------------------ */
-    parameter CHIP_BITS = 4;
+    parameter CHIP_BITS = 2;
     parameter CLK_PERIOD = 1000;
     /* ------------------------------------ */
     /* ------------------------------------ */
@@ -85,7 +85,7 @@ module tb_ppm16_demod();
             /* ------------------------------------ */
 			/* ----------- Change These ----------- */
 			/* ------------------------------------ */
-            localparam NUM_ROWS        = 100;
+            localparam NUM_ROWS        = 40;
             localparam CHIPS_PER_ROW   = 16;
 			/* ------------------------------------ */
 			/* ------------------------------------ */
@@ -95,14 +95,6 @@ module tb_ppm16_demod();
             reg [CHIPS_PER_ROW*CHIP_BITS-1:0] rx_bits [NUM_ROWS-1:0];
             reg [CHIPS_PER_ROW*CHIP_BITS-1:0] curr_row ;
             reg curr_bit;
-            
-            string chip_bits;
-            
-            // Input file name based on settings
-            case (CHIP_BITS)
-                3: chip_bits = "3";
-                1: chip_bits = "1";
-            endcase
             
             // Reading from the file and setting up the file to write results to
             $readmemb("/tools/B/lydialee/camera/spad-comms/PPM/verilog/bleh.b", rx_bits);

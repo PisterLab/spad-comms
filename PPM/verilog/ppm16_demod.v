@@ -132,7 +132,7 @@ module ppm16_demod #(
         .threshold_unmet(corr_threshold_unmet));
     
     // Checking when the counters are at their max
-    assign max_chip_bit_count =                 chip_bit_count == CHIP_BITS;
+    assign max_chip_bit_count =                 chip_bit_count == CHIP_BITS-1;
     assign max_symbol_chip_count =              symbol_chip_count == 4'b1111;
     assign max_primary_header1_symbol_count =   (primary_header1_symbol_count == 4'b1000);
     assign max_primary_header2_symbol_count =   primary_header2_symbol_count;
@@ -148,6 +148,7 @@ module ppm16_demod #(
         increment_chip_bit_count = 1'b0;
         increment_symbol_chip_count = 1'b0;
         increment_primary_header1_symbol_count = 1'b0;
+        increment_primary_header2_symbol_count = 1'b0;
         increment_data_field_symbol_count = 1'b0;
         
         load_len_msb = 1'b0;

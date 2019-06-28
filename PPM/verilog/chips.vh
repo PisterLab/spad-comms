@@ -1,6 +1,6 @@
 `define PREAMBLE_SYMBOL 4'b0000
-`define SFD0 4'h7
-`define SFD1 4'hA
+`define SFD0 4'b0111
+`define SFD1 4'b1010
 `define ceilLog2(x) ( \
 (x) > 2**30 ? 31 : \
 (x) > 2**29 ? 30 : \

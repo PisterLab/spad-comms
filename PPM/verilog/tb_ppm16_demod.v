@@ -11,7 +11,7 @@ module tb_ppm16_demod();
     /* ------------------------------------ */
     /* ----------- Change These ----------- */
     /* ------------------------------------ */
-    parameter CHIP_BITS = 1;
+    parameter CHIP_BITS = 4;
     parameter CLK_PERIOD = 1000;
     /* ------------------------------------ */
     /* ------------------------------------ */
@@ -82,8 +82,14 @@ module tb_ppm16_demod();
             integer row_count;
             integer bit_count;
             
+            /* ------------------------------------ */
+			/* ----------- Change These ----------- */
+			/* ------------------------------------ */
             localparam NUM_ROWS        = 100;
             localparam CHIPS_PER_ROW   = 16;
+			/* ------------------------------------ */
+			/* ------------------------------------ */
+			/* ------------------------------------ */
             
             // Rread as rows of bits
             reg [CHIPS_PER_ROW*CHIP_BITS-1:0] rx_bits [NUM_ROWS-1:0];

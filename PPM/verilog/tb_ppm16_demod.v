@@ -77,7 +77,7 @@ module tb_ppm16_demod();
     task test_false_negative;
         begin : test_false_neg
             /*
-                Purpose is to test for false negatives.
+                Test if the thing can detect packets correctly/at all.
             */
             integer row_count;
             integer bit_count;

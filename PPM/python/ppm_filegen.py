@@ -189,4 +189,4 @@ if __name__ == "__main__":
 	bits_per_chip = 2
 	
 	outputFile = './bleh.b'
-	rx_rand_data(outputFile, num_rows, chips_per_row, chips_per_symbol, bits_per_chip, mode='one')
+	rx_rand_data(outputFile, num_rows, chips_per_row, chips_per_symbol, bits_per_chip, mode='rand')

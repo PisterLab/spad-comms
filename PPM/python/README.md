@@ -2,7 +2,12 @@
 This contains all the Python scripts associated with the pulse-position modulation portion of the project.
 
 # Table of Contents
+[ppm_base.py](#ppm_base)
 [ppm_filegen.py](#ppm_filegen)
+
+<a name="ppm_base"></a>
+## ppm_base.py
+Commonly used functions for modulation and demodulation. I did my best to be as clear as possible by providing use cases with the doctests and including detailed comments.
 
 <a name="ppm_filegen"></a>
 ## ppm_filegen.py

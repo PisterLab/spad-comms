@@ -22,6 +22,7 @@ The associated testbench checks the functionality of the PPM demodulator. It inc
 * `chips.vh`
 ### Running the Testbench
 1. In the `../python` directory, there is a file `ppm_filegen.py`. At the bottom of the file after `if __name__ == ...`, modify the main method to use whichever functions you need with whatever parameters you need.
-2. In Terminal, `python ppm_filegen.py`
-3. In the `../verilog` directory, modify `tb_ppm16_demod.v` so CHIP_BITS, NUM_ROWS, and CHIPS_PER_ROW match with your settings in the Python script.
-4. Run the testbench in the Verilog simulator of your choice.
+2. In Terminal, `python ppm_filegen.py`.
+3. Copy the output file into your `../verilog` directory.
+4. In the `../verilog` directory, modify `tb_ppm16_demod.v` so CHIP_BITS, NUM_ROWS, and CHIPS_PER_ROW match with your settings in the Python script.
+5. Run the testbench in the Verilog simulator of your choice.

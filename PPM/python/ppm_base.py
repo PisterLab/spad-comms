@@ -27,6 +27,9 @@ def ppm_mod_vals(values, chips_per_symbol, bits_per_chip, mode=None):
 		Returns a flattened array where elements 0 to chips_per_symbol-1 
 		correspond to the PPM form of the 0th element in values, etc.
 		Note that the MSB goes in the 0th element.
+	Raises:
+		UserWarning if the intended symbol value is greater than what's permissible
+		given the number of chips per symbol.
 
 	>>> values = [1, 2, 3]
 	>>> expected_output = [0,0,0,0,1,1,0,0] + [0,0,1,1,0,0,0,0] + [1,1,0,0,0,0,0,0]
@@ -38,12 +41,15 @@ def ppm_mod_vals(values, chips_per_symbol, bits_per_chip, mode=None):
 	for val in values:
 		# Check that the value doesn't exceed the max possible value
 		if val >= chips_per_symbol:
-			raise ValueError("{0} > Max {1}".format(val, chips_per_symbol))
-		
+			raise UserWarning("{0} > Max {1}".format(val, chips_per_symbol))
+			val_mod = chips_per_symbol - 1
+		else:
+			val_mod = val
+			
 		# The value indicates where the high value should go amongst the 0s
-		mod_val = [0]*(chips_per_symbol-val-1)*bits_per_chip \
+		mod_val = [0]*(chips_per_symbol-val_mod-1)*bits_per_chip \
 					+ [1]*bits_per_chip \
-					+ [0]*val*bits_per_chip
+					+ [0]*val_mod*bits_per_chip
 					
 		if mode == 'rev':
 			mod_val = mod_val[::-1]

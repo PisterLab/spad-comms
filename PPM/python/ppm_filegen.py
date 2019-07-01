@@ -11,7 +11,6 @@ import doctest
 from math import ceil
 from ppm_base import ppm_mod_vals, ppm_mod_bits
 
-
 def rx_uniform(outputFile, num_rows, chips_per_row, bits_per_chip, val=0):
 	"""
 	Inputs:
@@ -35,7 +34,8 @@ def rx_uniform(outputFile, num_rows, chips_per_row, bits_per_chip, val=0):
 def rx_rand_data(outputFile, num_rows, chips_per_row, chips_per_symbol, bits_per_chip,
 				preamble=[0,0,0,0], sfd0=[0,1,1,1], sfd1=[1,0,1,0],
 				p_version=[0,0,0], p_id=[1]*13, p_seqcontr=[0,1]+[0]*14,
-				p_datalen=[0]*16, mode='rand'):
+				p_datalen=[0]*16, mode='rand', 
+				sigma_tx=0, sigma_bg=0):
 	"""
 	Inputs:
 		outputFile: String. Path and name of the file to write to.
@@ -59,6 +59,10 @@ def rx_rand_data(outputFile, num_rows, chips_per_row, chips_per_symbol, bits_per
 			Packet data is randomized.
 		mode: String 'rand', 'zero', 'one'. Specifies what goes in the non-packet
 			regions of the transmitted bits.
+		sigma_tx: Float. Standard deviation (in chips) to inject into the packet. Does
+			not inject noise into the non-packet regions.
+		sigma_bg: Float. Standard deviation (in bits) to inject into the background
+			of all transmitted bits.
 	Outputs:
 		No return value. Writes to 'outputFile' with the fully constructed 
 		packet randomly placed somewhere in the file. Format is what the 
@@ -88,10 +92,18 @@ def rx_rand_data(outputFile, num_rows, chips_per_row, chips_per_symbol, bits_per
 							* p_datalen_octets_dec
 	p_data_demod = np.random.randint(2, size=p_datalen_bits_demod)
 	
-	# Constructing the packet first as chips, then converting to bits
-	packet_demod = preamble*2 + sfd0 + sfd1 + p_version \
+	# Constructing the packet first as chips and inserting TX noise
+	# (if any)
+	packet_demod_noiseless = preamble*2 + sfd0 + sfd1 + p_version \
 		+ p_id + p_seqcontr + p_datalen + list(p_data_demod)
-	packet = ppm_mod_bits(packet_demod, chips_per_symbol, \
+	if sigma_tx != 0:
+		noise_tx = np.random.normal(loc=0, scale=sigma_tx, 
+							size=len(packet_demod_noiseless))
+	else:
+		noise_tx = np.zeros(len(packet_demod_noiseless))
+	packet_demod_noisy = list(np.asarray(packet_demod_noiseless) + noise_tx)
+	packet_demod_noisy = [int(i) for i in packet_demod_noisy]
+	packet = ppm_mod_bits(packet_demod_noisy, chips_per_symbol, \
 						bits_per_chip, mode=None)
 	# packet = np.array([[c]*bits_per_chip for c in packet_chips])
 	packet = packet.flatten()
@@ -111,15 +123,21 @@ def rx_rand_data(outputFile, num_rows, chips_per_row, chips_per_symbol, bits_per
 		write_str = ''
 		while idx < total_bits:
 			# Constructing the row to write
-			if idx >= loc and idx < loc+len(packet):
-				write_str = write_str + str(packet[idx-loc]) 
-			elif mode == 'zero':
-				write_str = write_str + '0'
-			elif mode == 'one':
-				write_str = write_str + '1'
+			if sigma_bg != 0:
+				noise_bg = np.random.normal(loc=0, scale=sigma_bg)
 			else:
-				write_str = write_str + str(np.random.randint(2)) 
-			
+				noise_bg = 0
+			if idx >= loc and idx < loc+len(packet):
+				val = packet[idx-loc]
+			elif mode == 'zero':
+				val = 0
+			elif mode == 'one':
+				val = 1
+			else:
+				val = np.random.randint(2)
+
+			val = min(int(round(val + noise_bg)), 1)
+			write_str = write_str + str(val)
 			# End of the row
 			if col == bits_per_row-1:
 				col = 0
@@ -141,13 +159,13 @@ def tx_data_arb(inputFile, outputFile, channelCount, sampleRate,
 		channelCount: Integer 1 or 2. The channel to use on the waveform
 			generator.
 		sampleRate: Integer. Data rate in Hz. Don't use scientific notation.
-		fileFormat: Unknown. It's some version of something.
-		columnChar: Unknown. Likely some method of including something 2D?
+		fileFormat: String. Unknown purpose. It's likely some version of something.
+		columnChar: String. Unknown purpose. Likely some method of including something 2D?
 		highLevel: Float. Voltage level(?) for logic high.
 		lowLevel: Float. Voltage level(?) for logic low.
-		dataType: Unknown, but I'm guessing it's the number of bits to use
+		dataType: String. Unknown, but I'm guessing it's the number of bits to use
 			for resolution when writing.
-		filterOn: Unknown.
+		filterOn: Boolean. Unknown purpose.
 	Outputs:
 		No return value. Writes the .arb file to 'outputFile' based on the data from
 		'inputFile' and the rest of the specs.
@@ -197,7 +215,7 @@ if __name__ == "__main__":
 		
 		
 	# Reading in .b file for arbitrary TX
-	if True:
+	if False:
 		tx_arb_specs = dict(
 			inputFile="../verilog/bleh.b",
 			outputFile="../arb/bleh.arb",

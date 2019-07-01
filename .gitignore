@@ -3,6 +3,9 @@
 *.swp
 .nfs*
 
+# Binay files
+*.b
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

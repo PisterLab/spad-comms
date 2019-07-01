@@ -131,7 +131,7 @@ def rx_rand_data(outputFile, num_rows, chips_per_row, chips_per_symbol, bits_per
 			idx = idx + 1
 	return
 
-def tx_data(inputFile, outputFile, channelCount, sampleRate,
+def tx_data_arb(inputFile, outputFile, channelCount, sampleRate,
 	fileFormat="1.10", columnChar="TAB", highLevel=1, lowLevel=0, dataType='Short',
 	filterOn=False):
 	"""

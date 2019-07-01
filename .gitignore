@@ -1,6 +1,7 @@
 # Text editor swap files
 *~
 *.swp
+.nfs*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

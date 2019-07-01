@@ -131,11 +131,83 @@ def rx_rand_data(outputFile, num_rows, chips_per_row, chips_per_symbol, bits_per
 			idx = idx + 1
 	return
 
-if __name__ == "__main__":
-	num_rows = 40
-	chips_per_row = 16
-	chips_per_symbol = 16
-	bits_per_chip = 2
+def tx_data(inputFile, outputFile, channelCount, sampleRate,
+	fileFormat="1.10", columnChar="TAB", highLevel=1, lowLevel=0, dataType='Short',
+	filterOn=False):
+	"""
+	Inputs:
+		inputFile: Path to the file with the data bits to be transmitted.
+		outputFile: Path to the .arb file to write to.
+		channelCount: Integer 1 or 2. The channel to use on the waveform
+			generator.
+		sampleRate: Integer. Data rate in Hz. Don't use scientific notation.
+		fileFormat: Unknown. It's some version of something.
+		columnChar: Unknown. Likely some method of including something 2D?
+		highLevel: Float. Voltage level(?) for logic high.
+		lowLevel: Float. Voltage level(?) for logic low.
+		dataType: Unknown, but I'm guessing it's the number of bits to use
+			for resolution when writing.
+		filterOn: Unknown.
+	Outputs:
+		No return value. Writes the .arb file to 'outputFile' based on the data from
+		'inputFile' and the rest of the specs.
+	"""
+	if filterOn:
+		filterTxt = '"ON"'
+	else:
+		filterTxt = '"OFF"'
 	
-	outputFile = './bleh.b'
-	rx_rand_data(outputFile, num_rows, chips_per_row, chips_per_symbol, bits_per_chip, mode='rand')
+	header = "File Format:{0}\n".format(fileFormat) + \
+		"Channel Count:{0}\n".format(str(channelCount)) + \
+		"Column Char:{0}\n".format(columnChar) + \
+		"Sample Rate:{0}\n".format(str(sampleRate)) + \
+		"High Level:{0}\n".format(str(highLevel)) + \
+		"Low Level:{0}\n".format(str(lowLevel)) + \
+		'Data Type:"{0}"\n'.format(dataType) + \
+		"Filter:{0}\n".format(filterTxt)
+		
+	with open(outputFile, 'w+') as fileOut:
+		with open(inputFile, 'r') as fileIn:
+			# Check what size restrictions are on read(), or this could get
+			# unwieldy.
+			txt_in = fileIn.read()
+			data_points = len(txt_in) - txt_in.count('\n')
+			header = header + "Data Points:{0}\n".format(str(data_points)) + \
+				"Data:\n"
+			fileOut.write(header)
+		with open(inputFile, 'r') as fileIn:
+			for line in fileIn.readlines():
+				line_rev = line[::-1]
+				line_rev = line_rev.replace('\n', '')
+ 				fileOut.write('\n'.join(line_rev)+'\n')
+
+if __name__ == "__main__":
+	# Generating and transmitting a single valid data packet in the midst
+	# of random nonsense.
+	if True:
+		rx_data_specs = dict(
+			outputFile = "../verilog/bleh.b",
+			num_rows = 20,
+			chips_per_row = 16,
+			chips_per_symbol = 16,
+			bits_per_chip = 2,
+			mode = 'rand')
+		
+		rx_rand_data(**rx_data_specs)
+		
+		
+	# Reading in .b file for arbitrary TX
+	if True:
+		tx_arb_specs = dict(
+			inputFile="../verilog/bleh.b",
+			outputFile="../arb/bleh.arb",
+			channelCount=1,
+			sampleRate=100000,
+			fileFormat="1.10",
+			columnChar="TAB",
+			highLevel=1,
+			lowLevel=0,
+			dataType="Short",
+			filterOn=False)
+			
+		tx_data(**tx_arb_specs)

@@ -7,7 +7,7 @@
 
 import numpy as np
 import scipy as sp
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 import doctest
 from math import ceil
 from ppm_base import ppm_mod_vals, ppm_mod_bits
@@ -92,7 +92,7 @@ def gen_rx_rand_data(outputFile, num_rows, chips_per_row, chips_per_symbol, bits
 	p_datalen_bits_demod = demod_bits_per_symbol * symbols_per_octet \
 							* p_datalen_octets_dec
 	p_data_demod = np.random.randint(2, size=p_datalen_bits_demod)
-	
+	print(p_data_demod)
 	# Constructing the packet first as chips and inserting TX noise
 	# (if any)
 	packet_demod_noiseless = preamble*2 + sfd0 + sfd1 + p_version \
@@ -128,6 +128,7 @@ def gen_rx_rand_data(outputFile, num_rows, chips_per_row, chips_per_symbol, bits
 				noise_bg = np.random.normal(loc=0, scale=sigma_bg)
 			else:
 				noise_bg = 0
+				
 			if idx >= loc and idx < loc+len(packet):
 				val = packet[idx-loc]
 			elif mode == 'zero':
@@ -198,7 +199,7 @@ def gen_tx_data_arb(inputFile, outputFile, channelCount, sampleRate,
 			for line in fileIn.readlines():
 				line_rev = line[::-1]
 				line_rev = line_rev.replace('\n', '')
- 				fileOut.write('\n'.join(line_rev)+'\n')
+				fileOut.write('\n'.join(line_rev)+'\n')
 
 if __name__ == "__main__":
 	# Generating and transmitting a single valid data packet in the midst
@@ -209,10 +210,11 @@ if __name__ == "__main__":
 			num_rows = 20,
 			chips_per_row = 16,
 			chips_per_symbol = 16,
-			bits_per_chip = 2,
-			mode = 'rand')
+			bits_per_chip = 1,
+			p_datalen = [0]*15 + [1],
+			mode = 'one')
 		
-		rx_rand_data(**rx_data_specs)
+		gen_rx_rand_data(**rx_data_specs)
 		
 		
 	# Reading in .b file for arbitrary TX
@@ -229,4 +231,4 @@ if __name__ == "__main__":
 			dataType="Short",
 			filterOn=False)
 			
-		tx_data(**tx_arb_specs)
+		gen_tx_data(**tx_arb_specs)

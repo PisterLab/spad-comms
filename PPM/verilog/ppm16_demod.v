@@ -42,8 +42,8 @@ module ppm16_demod #(
     output wire [`ceilLog2(CHIP_BITS)-1:0]  DEMOD_chip_bit_count_SC,
     output wire [3:0]                       DEMOD_symbol_chip_count_SC,
     output wire [3:0]                       DEMOD_primary_header1_symbol_count_SC,
-    output wire                             DEMOD_primary_header2_symbol_count_SC,
-    output wire [18:0]                      DEMOD_data_field_symbol_count_SC,
+    output wire [1:0]                       DEMOD_primary_header2_symbol_count_SC,
+    output wire [15:0]                      DEMOD_data_field_symbol_count_SC,
     output wire                             DEMOD_max_chip_bit_count_SC,
     output wire                             DEMOD_max_symbol_chip_count_SC,
     output wire                             DEMOD_max_primary_header1_symbol_count_SC,
@@ -55,8 +55,6 @@ module ppm16_demod #(
     output wire                             DEMOD_increment_primary_header2_symbol_count_SC,
     output wire                             DEMOD_increment_data_field_symbol_count_SC,
     output wire [15:0]                      DEMOD_packet_data_length_symbols_SC,
-    output wire                             DEMOD_load_len_msb_SC,
-    output wire                             DEMOD_load_len_lsb_SC,
     output wire                             DEMOD_packet_detected_SC,
     output wire                             DEMOD_dout_valid_SC
     );
@@ -90,9 +88,9 @@ module ppm16_demod #(
     reg [`ceilLog2(CHIP_BITS)-1:0]  chip_bit_count;
     reg [3:0]                       symbol_chip_count;
     
-    reg [3:0]   primary_header1_symbol_count;
-    reg         primary_header2_symbol_count;
-    reg [18:0]  data_field_symbol_count;
+    reg [2:0]   primary_header1_symbol_count;
+    reg [1:0]   primary_header2_symbol_count;
+    reg [15:0]  data_field_symbol_count;
     
     wire max_chip_bit_count;
     wire max_symbol_chip_count;
@@ -108,8 +106,7 @@ module ppm16_demod #(
     
     // Getting data field length
     reg [15:0] packet_data_length_symbols;
-    reg load_len_msb;
-    reg load_len_lsb;
+    reg [1:0] load_len_count;
     
     // Registered outputs
     reg r_packet_detected;
@@ -134,8 +131,8 @@ module ppm16_demod #(
     // Checking when the counters are at their max
     assign max_chip_bit_count =                 chip_bit_count == CHIP_BITS-1;
     assign max_symbol_chip_count =              symbol_chip_count == 4'b1111;
-    assign max_primary_header1_symbol_count =   (primary_header1_symbol_count == 4'b1000);
-    assign max_primary_header2_symbol_count =   primary_header2_symbol_count;
+    assign max_primary_header1_symbol_count =   (primary_header1_symbol_count == 3'b111);
+    assign max_primary_header2_symbol_count =   (primary_header2_symbol_count == 2'b11);
     assign max_data_field_symbol_count =        (data_field_symbol_count == packet_data_length_symbols);
     
     // FSM output progression
@@ -150,9 +147,6 @@ module ppm16_demod #(
         increment_primary_header1_symbol_count = 1'b0;
         increment_primary_header2_symbol_count = 1'b0;
         increment_data_field_symbol_count = 1'b0;
-        
-        load_len_msb = 1'b0;
-        load_len_lsb = 1'b0;
         
         r_packet_detected = 1'b0;
         r_dout_valid = 1'b0;
@@ -182,8 +176,6 @@ module ppm16_demod #(
                 increment_chip_bit_count = 1'b1;
                 increment_symbol_chip_count = 1'b1;
                 increment_primary_header2_symbol_count = 1'b1;
-                load_len_msb = primary_header2_symbol_count;
-                load_len_lsb = ~primary_header2_symbol_count;
                 corr_input_valid = max_symbol_chip_count && max_chip_bit_count;
             end
             S_DATA_FIELD: begin
@@ -191,7 +183,8 @@ module ppm16_demod #(
                 increment_symbol_chip_count = 1'b1;
                 increment_data_field_symbol_count = 1'b1;
                 r_packet_detected = (chip_bit_count == {(`ceilLog2(CHIP_BITS)){1'b0}}) 
-                                    && (symbol_chip_count == 4'b0000);
+                                    && (symbol_chip_count == 4'b0000)
+                                    && (data_field_symbol_count == {(16){1'b0}});
                 if (max_symbol_chip_count && max_chip_bit_count) begin
                     corr_input_valid = 1'b1;
                     r_dout_valid = 1'b1;
@@ -274,13 +267,14 @@ module ppm16_demod #(
         if (~resetn) begin
             primary_header1_symbol_count <= 4'b0000;
             primary_header2_symbol_count <= 1'b0;
-            data_field_symbol_count <= {(19){1'b0}};
+            data_field_symbol_count <= {(16){1'b0}};
         end else if (increment_chip_bit_count && max_chip_bit_count
                     && increment_symbol_chip_count && max_symbol_chip_count) begin
             if (increment_primary_header1_symbol_count) primary_header1_symbol_count <= max_primary_header1_symbol_count ? 4'b0000 :
                                                                                     primary_header1_symbol_count + 1'b1;
-            if (increment_primary_header2_symbol_count) primary_header2_symbol_count <= ~max_primary_header2_symbol_count;
-            if (increment_data_field_symbol_count) data_field_symbol_count <= max_data_field_symbol_count ? {(19){1'b0}} :
+            if (increment_primary_header2_symbol_count) primary_header2_symbol_count <= max_primary_header2_symbol_count ? 2'b00 :
+            																			primary_header2_symbol_count + 1'b1;
+            if (increment_data_field_symbol_count) data_field_symbol_count <= max_data_field_symbol_count ? {(16){1'b0}} :
                                                                                     data_field_symbol_count + 1'b1;
         end
     end
@@ -288,8 +282,12 @@ module ppm16_demod #(
     // Loading the packet length field
     always @(posedge clk or negedge resetn) begin
         if (~resetn) packet_data_length_symbols <= {(16){1'b0}};
-        else if (load_len_lsb) packet_data_length_symbols[7:0] <= corr_symbol;
-        else if (load_len_msb) packet_data_length_symbols[15:8] <= corr_symbol;
+        case (primary_header2_symbol_count)
+        	2'b00: packet_data_length_symbols[3:0] <= corr_symbol;
+        	2'b01: packet_data_length_symbols[7:4] <= corr_symbol;
+        	2'b10: packet_data_length_symbols[11:8] <= corr_symbol;
+        	2'b11: packet_data_length_symbols[15:12] <= corr_symbol;
+        endcase
     end
     
     // Shifting in new bits
@@ -330,8 +328,6 @@ module ppm16_demod #(
     assign DEMOD_increment_primary_header2_symbol_count_SC = increment_primary_header2_symbol_count;
     assign DEMOD_increment_data_field_symbol_count_SC = increment_data_field_symbol_count;
     assign DEMOD_packet_data_length_symbols_SC = packet_data_length_symbols;
-    assign DEMOD_load_len_msb_SC = load_len_msb;
-    assign DEMOD_load_len_lsb_SC = load_len_lsb;
     assign DEMOD_packet_detected_SC = packet_detected;
     assign DEMOD_dout_valid_SC = dout_valid;
     

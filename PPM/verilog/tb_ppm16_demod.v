@@ -11,7 +11,7 @@ module tb_ppm16_demod();
     /* ------------------------------------ */
     /* ----------- Change These ----------- */
     /* ------------------------------------ */
-    parameter CHIP_BITS = 2;
+    parameter CHIP_BITS = 1;
     parameter CLK_PERIOD = 1000;
     /* ------------------------------------ */
     /* ------------------------------------ */
@@ -64,8 +64,6 @@ module tb_ppm16_demod();
         .DEMOD_increment_primary_header2_symbol_count_SC(),
         .DEMOD_increment_data_field_symbol_count_SC(),
         .DEMOD_packet_data_length_symbols_SC(),
-        .DEMOD_load_len_msb_SC(),
-        .DEMOD_load_len_lsb_SC(),
         .DEMOD_packet_detected_SC(),
         .DEMOD_dout_valid_SC());
     
@@ -85,7 +83,7 @@ module tb_ppm16_demod();
             /* ------------------------------------ */
 			/* ----------- Change These ----------- */
 			/* ------------------------------------ */
-            localparam NUM_ROWS        = 40;
+            localparam NUM_ROWS        = 20;
             localparam CHIPS_PER_ROW   = 16;
 			/* ------------------------------------ */
 			/* ------------------------------------ */
@@ -161,7 +159,7 @@ module tb_ppm16_demod();
     // Write to the file for each valid output
     always @(posedge clk) begin
         if(dout_valid) begin
-            $fwrite(FILE_result, "%1d", dout);
+            $fwrite(FILE_result, "%b", dout);
         end
     end
 endmodule

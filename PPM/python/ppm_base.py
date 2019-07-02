@@ -1,8 +1,8 @@
 # Lydia Lee
 # Created 2019/06/28
 
-# Basic utility functions used throughout the rest of the PPM code
-# base.
+# Basic utility functions (namely, modulation and demodulation) used 
+# throughout the rest of the PPM code base. 
 
 import numpy as np
 import scipy as sp
@@ -121,7 +121,7 @@ def ppm_bits_to_chips(symbol_mod_bits, bits_per_chip):
 	return chips
 
 
-def ppm_demod_bits_vals(mod_bits, chips_per_symbol, bits_per_chip):
+def ppm_demod_bits_vals(mod_bits, chips_per_symbol, bits_per_chip, threshold=0):
 	"""
 	Inputs:
 		mod_bits: Collection of bits where the MSB is in the 0th index
@@ -129,15 +129,19 @@ def ppm_demod_bits_vals(mod_bits, chips_per_symbol, bits_per_chip):
 		chips_per_symbol: Integer. Number of chips used for a single symbol
 			in the PPM encoding.
 		bits_per_chip:	Integer. Number of bits associated with a single chip.
+		threshold: Integer. Minimum value a maximum must take in order to be 
+			considered a non-noise pulse.
 	Outputs:
-		Returns a collection of symbols (integers not bits) where the incoming
-		chips have been demodulated to find their associated symbol.
+		Returns (1) a collection of symbols (integers, not bits) where the incoming
+		chips have been demodulated to find their associated symbol (2) a
+		collection of boolean values indicating if the symbol of the same index 
+		met the threshold for being considered non-noise.
 	Raises:
 		ValueError if the number of bits received does not contain an integer
 		number of symbols.
 		
 	>>> chips_per_symbol = 16
-	>>> bits_per_chip = 2
+	>>> bits_per_chip = 4
 	>>> values = np.asarray([i for i in range(chips_per_symbol)])
 	>>> print(list(values))
 	[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
@@ -148,6 +152,7 @@ def ppm_demod_bits_vals(mod_bits, chips_per_symbol, bits_per_chip):
 	"""
 	bits_per_symbol = chips_per_symbol * bits_per_chip
 	demod_values = []
+	threshold_met = []
 	
 	# Check that there's no fragmentation of a received symbol
 	if len(mod_bits) % bits_per_symbol != 0:
@@ -162,5 +167,6 @@ def ppm_demod_bits_vals(mod_bits, chips_per_symbol, bits_per_chip):
 	for symbol_bits in split_mod_bits:
 		chips = ppm_bits_to_chips(symbol_bits, bits_per_chip)
 		demod_val = chips_per_symbol - 1 - np.argmax(chips)
+		threshold_met.append(np.max(chips) >= threshold)
 		demod_values.append(demod_val)
 	return demod_values

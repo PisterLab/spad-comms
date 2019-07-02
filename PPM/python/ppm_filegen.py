@@ -1,8 +1,9 @@
 # Lydia Lee
 # Created 2019/06/27
 
-# Code for generating binary files of received bits with or 
-# without PPM packets depending on user specification.
+# Code for generating binary files of received information for Verilog
+# simulation or using binary files to generate .arb files for the 
+# arbitrary waveform generator.
 
 import numpy as np
 import scipy as sp
@@ -11,7 +12,7 @@ import doctest
 from math import ceil
 from ppm_base import ppm_mod_vals, ppm_mod_bits
 
-def rx_uniform(outputFile, num_rows, chips_per_row, bits_per_chip, val=0):
+def gen_rx_uniform(outputFile, num_rows, chips_per_row, bits_per_chip, val=0):
 	"""
 	Inputs:
 		outputFile: String. Path and name of the file to write to.
@@ -31,7 +32,7 @@ def rx_uniform(outputFile, num_rows, chips_per_row, bits_per_chip, val=0):
 			file.write(''.join([str(val)]*chips_per_row*bits_per_chip+'\n'))
 	return
 
-def rx_rand_data(outputFile, num_rows, chips_per_row, chips_per_symbol, bits_per_chip,
+def gen_rx_rand_data(outputFile, num_rows, chips_per_row, chips_per_symbol, bits_per_chip,
 				preamble=[0,0,0,0], sfd0=[0,1,1,1], sfd1=[1,0,1,0],
 				p_version=[0,0,0], p_id=[1]*13, p_seqcontr=[0,1]+[0]*14,
 				p_datalen=[0]*16, mode='rand', 
@@ -70,7 +71,7 @@ def rx_rand_data(outputFile, num_rows, chips_per_row, chips_per_symbol, bits_per
 		a single packet, and everything else is randomized.
 	Raises:
 		ValueError if the specified number of chips is insufficient to fit the
-			packet, this will append them to the end anyhow.
+			packet.
 	Note:
 		See either the Overleaf or referenced recommendation		
 			https://www.overleaf.com/project/5ceff4266413dd65856e722e
@@ -149,7 +150,7 @@ def rx_rand_data(outputFile, num_rows, chips_per_row, chips_per_symbol, bits_per
 			idx = idx + 1
 	return
 
-def tx_data_arb(inputFile, outputFile, channelCount, sampleRate,
+def gen_tx_data_arb(inputFile, outputFile, channelCount, sampleRate,
 	fileFormat="1.10", columnChar="TAB", highLevel=1, lowLevel=0, dataType='Short',
 	filterOn=False):
 	"""

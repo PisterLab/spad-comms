@@ -3,8 +3,9 @@
 *.swp
 .nfs*
 
-# Binay files
+# Binary files
 *.b
+*_result.txt
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

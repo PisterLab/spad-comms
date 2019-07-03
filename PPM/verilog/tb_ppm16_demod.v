@@ -7,12 +7,15 @@
 */
 
 module tb_ppm16_demod();
-    
+    parameter MODE_SPOTCHECK = 0;
+    parameter MODE_SUITECHECK = 1;
+        
     /* ------------------------------------ */
     /* ----------- Change These ----------- */
     /* ------------------------------------ */
     parameter CHIP_BITS = 1;
     parameter CLK_PERIOD = 1000;
+	parameter MODE = MODE_SUITECHECK;
     /* ------------------------------------ */
     /* ------------------------------------ */
     /* ------------------------------------ */
@@ -76,15 +79,21 @@ module tb_ppm16_demod();
         begin : test_false_neg
             /*
                 Test if the thing can detect packets correctly/at all.
+                Iterates through generated binary files. Good for testing
+                noise conditions.
             */
             integer row_count;
             integer bit_count;
+            integer iteration;
+            integer num_iterations;
             
             /* ------------------------------------ */
 			/* ----------- Change These ----------- */
 			/* ------------------------------------ */
-            localparam NUM_ROWS        = 20;
+            localparam NUM_ROWS        = 40;
             localparam CHIPS_PER_ROW   = 16;
+            localparam SUITECHECK_ITERATIONS  = 200;
+            
 			/* ------------------------------------ */
 			/* ------------------------------------ */
 			/* ------------------------------------ */
@@ -93,40 +102,61 @@ module tb_ppm16_demod();
             reg [CHIPS_PER_ROW*CHIP_BITS-1:0] rx_bits [NUM_ROWS-1:0];
             reg [CHIPS_PER_ROW*CHIP_BITS-1:0] curr_row ;
             reg curr_bit;
+            string start;
+            string num;
             
             // Reading from the file and setting up the file to write results to
-            $readmemb("/tools/B/lydialee/camera/spad-comms/PPM/verilog/bleh.b", rx_bits);
-            FILE_result = $fopen("/tools/B/lydialee/camera/spad-comms/PPM/verilog/bleh_result.txt", "w");
+            start = "/tools/B/lydialee/camera/spad-comms/PPM/verilog/";
+            case (MODE)
+            	MODE_SUITECHECK: begin
+            		num_iterations = SUITECHECK_ITERATIONS;
+            		start = "/tools/B/lydialee/camera/spad-comms/PPM/verilog/binary/bleh";
+            	end
+            	MODE_SPOTCHECK: begin 
+            		num_iterations = 1;
+            		start = "/tools/B/lydialee/camera/spad-comms/PPM/verilog/bleh";
+            	end
+            	default: begin
+            		num_iterations = 1;
+            		start = "/tools/B/lydialee/camera/spad-comms/PPM/verilog/bleh";
+            	end
+            endcase
             
-            // Clean startup sequence
-            @(posedge clk);
-            @(posedge clk);
-            @(posedge clk);
-            corr_threshold = 2'b10;
-            @(posedge clk);
-            resetn = 1'b0;
-            @(posedge clk);
-            resetn = 1'b1;
-            @(posedge clk);
-            rx_start = 1'b1;
-            @(posedge clk);
-            rx_start = 1'b0;
-            
-            // Feeding the info to the demodulator
-            row_count = 0;
-            while (row_count < NUM_ROWS) begin
-                curr_row = rx_bits[row_count];
-                //$display(rx_bits[row_count]);
-                bit_count = 0;
-                while (bit_count < CHIP_BITS*CHIPS_PER_ROW) begin
-                    curr_bit = curr_row[bit_count];
-                    din = curr_row[bit_count];
-                    @(posedge clk)
-                    bit_count = bit_count + 1;
-                end
-                row_count = row_count + 1;
-            end
-            $fclose(FILE_result);
+	        for (iteration=0; iteration<num_iterations; iteration=iteration+1) begin
+	        	// Binary files are numbered
+	        	num.itoa(iteration);
+	        	$readmemb({start, num, ".b"}, rx_bits);
+            	FILE_result = $fopen({start, num, "_result.txt"}, "w");
+            	// Clean startup sequence
+		        @(posedge clk);
+		        @(posedge clk);
+		        @(posedge clk);
+				corr_threshold = {(CHIP_BITS){1'b1}};
+		        @(posedge clk);
+		        resetn = 1'b0;
+		        @(posedge clk);
+		        resetn = 1'b1;
+		        @(posedge clk);
+		        rx_start = 1'b1;
+		        @(posedge clk);
+		        rx_start = 1'b0;
+		        
+		        // Feeding the info to the demodulator
+		        row_count = 0;
+		        while (row_count < NUM_ROWS) begin
+		            curr_row = rx_bits[row_count];
+		            //$display(rx_bits[row_count]);
+		            bit_count = 0;
+		            while (bit_count < CHIP_BITS*CHIPS_PER_ROW) begin
+		                curr_bit = curr_row[bit_count];
+		                din = curr_row[bit_count];
+		                @(posedge clk)
+		                bit_count = bit_count + 1;
+		            end
+		            row_count = row_count + 1;
+		        end
+		        $fclose(FILE_result);
+		    end
         end
     endtask
     
@@ -153,7 +183,7 @@ module tb_ppm16_demod();
     
     // Packet detection
     always @(posedge packet_detected) begin
-        $display("PACKET DETECTED AT TIME %d us", $time);
+    	$fwrite(FILE_result, "PACKET DETECTED AT TIME %d us\n", $time);
     end
     
     // Write to the file for each valid output

@@ -92,7 +92,6 @@ def gen_rx_rand_data(outputFile, num_rows, chips_per_row, chips_per_symbol, bits
 	p_datalen_bits_demod = demod_bits_per_symbol * symbols_per_octet \
 							* p_datalen_octets_dec
 	p_data_demod = np.random.randint(2, size=p_datalen_bits_demod)
-	print(p_data_demod)
 	# Constructing the packet first as chips and inserting TX noise
 	# (if any)
 	packet_demod_noiseless = preamble*2 + sfd0 + sfd1 + p_version \
@@ -115,7 +114,10 @@ def gen_rx_rand_data(outputFile, num_rows, chips_per_row, chips_per_symbol, bits
 		raise ValueError("Packet larger than no. of chips specified")
 
 	# Deciding on the (random) location to start the packet
-	loc = np.random.randint(total_bits-len(packet))
+	if total_bits == len(packet):
+		loc = 0
+	else:
+		loc = np.random.randint(total_bits-len(packet))
 	bits_per_row = bits_per_chip*chips_per_row
 	
 	with open(outputFile, 'w+') as file:
@@ -138,7 +140,13 @@ def gen_rx_rand_data(outputFile, num_rows, chips_per_row, chips_per_symbol, bits
 			else:
 				val = np.random.randint(2)
 
-			val = min(int(round(val + noise_bg)), 1)
+			if round(val + noise_bg) > 1:
+				val = 1
+			elif round(val + noise_bg) < 0:
+				val = 0
+			else:
+				val = int(round(val + noise_bg))
+				
 			write_str = write_str + str(val)
 			# End of the row
 			if col == bits_per_row-1:
@@ -205,17 +213,18 @@ if __name__ == "__main__":
 	# Generating and transmitting a single valid data packet in the midst
 	# of random nonsense.
 	if True:
-		rx_data_specs = dict(
-			outputFile = "../verilog/bleh.b",
-			num_rows = 20,
-			chips_per_row = 16,
-			chips_per_symbol = 16,
-			bits_per_chip = 1,
-			p_datalen = [0]*15 + [1],
-			mode = 'one')
+		for i in range(200):
+			rx_data_specs = dict(
+				outputFile = "../verilog/binary/bleh"+str(i)+".b",
+				num_rows = 40,
+				chips_per_row = 16,
+				chips_per_symbol = 16,
+				bits_per_chip = 1,
+				p_datalen = [0]*15 + [1],
+				mode = 'one',
+				sigma_bg=0)
 		
-		gen_rx_rand_data(**rx_data_specs)
-		
+			gen_rx_rand_data(**rx_data_specs)		
 		
 	# Reading in .b file for arbitrary TX
 	if False:

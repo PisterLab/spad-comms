@@ -115,7 +115,7 @@ module ppm16_demod #(
     // Partitioning incoming bits into chips for the correlator
     genvar i;
     generate
-        for (i=0; i<16; i=i+1) begin
+        for (i=0; i<16; i=i+1) begin: break_into_chips
             assign shifted_chips[i] = shifted_bits[(i+1)*CHIP_BITS-1:i*CHIP_BITS];
         end
     endgenerate

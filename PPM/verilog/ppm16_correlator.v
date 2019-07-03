@@ -31,7 +31,7 @@ module ppm16_correlator #(
     // Input is 0 when calculation isn't needed to save power
     genvar j;
     generate
-        for (j=0; j<16; j=j+1) begin
+        for (j=0; j<16; j=j+1) begin: input_invalid
             assign din[j] = input_valid ? chips_in[j] : {(CHIP_BITS){1'b0}};
         end
     endgenerate
@@ -40,16 +40,16 @@ module ppm16_correlator #(
     // N chips requires N-1 comparators
     genvar i;
     generate
-        for (i=0; i<16; i=i+2) begin
+        for (i=0; i<16; i=i+2) begin: comp0
             always @(*) idx_comp0[i/2] = (din[i] < din[i+1]) ? i+1 : i;
         end
         
-        for (i=0; i<8; i=i+2) begin
+        for (i=0; i<8; i=i+2) begin: comp1
             always @(*) idx_comp1[i/2] = (din[idx_comp0[i]] < din[idx_comp0[i+1]]) ? 
                 idx_comp0[i+1] : idx_comp0[i];
         end
         
-        for (i=0; i<4; i=i+2) begin
+        for (i=0; i<4; i=i+2) begin: comp2
             always @(*) idx_comp2[i/2] = (din[idx_comp1[i]] < din[idx_comp1[i+1]]) ? 
                 idx_comp1[i+1] : idx_comp1[i];
         end

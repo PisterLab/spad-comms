@@ -36,7 +36,7 @@ def gen_rx_rand_data(outputFile, num_rows, chips_per_row, chips_per_symbol, bits
 				preamble=[0,0,0,0], sfd0=[0,1,1,1], sfd1=[1,0,1,0],
 				p_version=[0,0,0], p_id=[1]*13, p_seqcontr=[0,1]+[0]*14,
 				p_datalen=[0]*16, mode='rand', 
-				sigma_tx=0, sigma_bg=0):
+				sigma_tx=0, sigma_bg=0, sigma_rx=0):
 	"""
 	Inputs:
 		outputFile: String. Path and name of the file to write to.
@@ -219,10 +219,10 @@ if __name__ == "__main__":
 				num_rows = 40,
 				chips_per_row = 16,
 				chips_per_symbol = 16,
-				bits_per_chip = 1,
+				bits_per_chip = 4,
 				p_datalen = [0]*15 + [1],
 				mode = 'one',
-				sigma_bg=0)
+				sigma_bg=0.1)
 		
 			gen_rx_rand_data(**rx_data_specs)		
 		

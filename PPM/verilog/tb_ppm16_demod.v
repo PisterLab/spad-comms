@@ -13,9 +13,17 @@ module tb_ppm16_demod();
     /* ------------------------------------ */
     /* ----------- Change These ----------- */
     /* ------------------------------------ */
-    parameter CHIP_BITS = 1;
+    
+    // Chips per bit
+    parameter CHIP_BITS = 4;
+    
+    // Clock period
     parameter CLK_PERIOD = 1000;
+    
+	// Whether you want to run your tests against multiple
+	// input binary files, or just one.
 	parameter MODE = MODE_SUITECHECK;
+	
     /* ------------------------------------ */
     /* ------------------------------------ */
     /* ------------------------------------ */
@@ -93,7 +101,6 @@ module tb_ppm16_demod();
             localparam NUM_ROWS        = 40;
             localparam CHIPS_PER_ROW   = 16;
             localparam SUITECHECK_ITERATIONS  = 200;
-            
 			/* ------------------------------------ */
 			/* ------------------------------------ */
 			/* ------------------------------------ */
@@ -131,7 +138,7 @@ module tb_ppm16_demod();
 		        @(posedge clk);
 		        @(posedge clk);
 		        @(posedge clk);
-				corr_threshold = {(CHIP_BITS){1'b1}};
+				corr_threshold = {1'b1, {(CHIP_BITS-1){1'b0}}};
 		        @(posedge clk);
 		        resetn = 1'b0;
 		        @(posedge clk);

@@ -41,16 +41,16 @@ module ppm16_correlator #(
     genvar i;
     generate
         for (i=0; i<16; i=i+2) begin: comp0
-            always @(*) idx_comp0[i/2] = (din[i] < din[i+1]) ? i+1 : i;
+            always @(*) idx_comp0[i/2] = (din[i] <= din[i+1]) ? i+1 : i;
         end
         
         for (i=0; i<8; i=i+2) begin: comp1
-            always @(*) idx_comp1[i/2] = (din[idx_comp0[i]] < din[idx_comp0[i+1]]) ? 
+            always @(*) idx_comp1[i/2] = (din[idx_comp0[i]] <= din[idx_comp0[i+1]]) ? 
                 idx_comp0[i+1] : idx_comp0[i];
         end
         
         for (i=0; i<4; i=i+2) begin: comp2
-            always @(*) idx_comp2[i/2] = (din[idx_comp1[i]] < din[idx_comp1[i+1]]) ? 
+            always @(*) idx_comp2[i/2] = (din[idx_comp1[i]] <= din[idx_comp1[i+1]]) ? 
                 idx_comp1[i+1] : idx_comp1[i];
         end
     endgenerate

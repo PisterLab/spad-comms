@@ -22,7 +22,7 @@ The associated testbench checks the functionality of the PPM demodulator. It inc
 * `chips.vh`
 ### Running the Testbench
 1. In the `../python` directory, there is a file `ppm_filegen.py`. At the bottom of the file after `if __name__ == ...`, modify the main method to use whichever functions you need with whatever parameters you need.
-2. In Terminal, `python ppm_filegen.py`.
-3. Copy the output file into your `../verilog` directory.
-4. In the `../verilog` directory, modify `tb_ppm16_demod.v` so CHIP_BITS, NUM_ROWS, and CHIPS_PER_ROW match with your settings in the Python script.
-5. Run the testbench in the Verilog simulator of your choice.
+2. In Terminal, `python ppm_filegen.py`. As I currently have it, I generate 200 files called `bleh#.b` where # can be 0 to 199, inclusive. It will place them in the `verilog/binary` directory.
+3. In the `../verilog` directory, modify `tb_ppm16_demod.v` so CHIP_BITS, NUM_ROWS, and CHIPS_PER_ROW match with your settings in the Python script.
+4. If you want to just run a single spot check with a single .b file, change `MODE` to `MODE_SPOTCHECK`. For the files in (2), change it to `MODE_SUITECHECK` and down below, modify `SUITECHECK_ITERATIONS` to match the number of files you generated. 
+5. Run the testbench `tb_ppm16_demod.v` in the Verilog simulator of your choice.

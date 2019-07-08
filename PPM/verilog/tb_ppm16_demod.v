@@ -15,7 +15,7 @@ module tb_ppm16_demod();
     /* ------------------------------------ */
     
     // Chips per bit
-    parameter CHIP_BITS = 4;
+    parameter CHIP_BITS = 2;
     
     // Clock period
     parameter CLK_PERIOD = 1000;

@@ -94,7 +94,7 @@ def gen_rx_rand_data(outputFile, num_rows, chips_per_row, chips_per_symbol, bits
 	p_data_demod = np.random.randint(2, size=p_datalen_bits_demod)
 	# Constructing the packet first as chips and inserting TX noise
 	# (if any)
-	packet_demod_noiseless = preamble*2 + sfd0 + sfd1 + p_version \
+	packet_demod_noiseless = preamble*8 + sfd0 + sfd1 + p_version \
 		+ p_id + p_seqcontr + p_datalen + list(p_data_demod)
 	if sigma_tx != 0:
 		noise_tx = np.random.normal(loc=0, scale=sigma_tx, 
@@ -219,10 +219,10 @@ if __name__ == "__main__":
 				num_rows = 40,
 				chips_per_row = 16,
 				chips_per_symbol = 16,
-				bits_per_chip = 4,
+				bits_per_chip = 2,
 				p_datalen = [0]*15 + [1],
 				mode = 'one',
-				sigma_bg=0.1)
+				sigma_bg=0)
 		
 			gen_rx_rand_data(**rx_data_specs)		
 		

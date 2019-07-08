@@ -41,7 +41,8 @@ module ppm16_demod #(
     output wire                             DEMOD_shift_new_bit_SC,
     output wire [`ceilLog2(CHIP_BITS)-1:0]  DEMOD_chip_bit_count_SC,
     output wire [3:0]                       DEMOD_symbol_chip_count_SC,
-    output wire [3:0]                       DEMOD_primary_header1_symbol_count_SC,
+    output wire [2:0]						DEMOD_preamble2_symbol_count_SC,
+    output wire [2:0]                       DEMOD_primary_header1_symbol_count_SC,
     output wire [1:0]                       DEMOD_primary_header2_symbol_count_SC,
     output wire [15:0]                      DEMOD_data_field_symbol_count_SC,
     output wire                             DEMOD_max_chip_bit_count_SC,
@@ -88,18 +89,21 @@ module ppm16_demod #(
     reg [`ceilLog2(CHIP_BITS)-1:0]  chip_bit_count;
     reg [3:0]                       symbol_chip_count;
     
+    reg [2:0] 	preamble2_symbol_count;
     reg [2:0]   primary_header1_symbol_count;
     reg [1:0]   primary_header2_symbol_count;
     reg [15:0]  data_field_symbol_count;
     
     wire max_chip_bit_count;
     wire max_symbol_chip_count;
+    wire max_preamble2_symbol_count;
     wire max_primary_header1_symbol_count;
     wire max_primary_header2_symbol_count;
     wire max_data_field_symbol_count;
     
     reg increment_chip_bit_count;
     reg increment_symbol_chip_count;
+    reg increment_preamble2_symbol_count;
     reg increment_primary_header1_symbol_count;
     reg increment_primary_header2_symbol_count;
     reg increment_data_field_symbol_count;
@@ -131,6 +135,7 @@ module ppm16_demod #(
     // Checking when the counters are at their max
     assign max_chip_bit_count =                 chip_bit_count == CHIP_BITS-1;
     assign max_symbol_chip_count =              symbol_chip_count == 4'b1111;
+    assign max_preamble2_symbol_count = 		(preamble2_symbol_count == 3'b110);
     assign max_primary_header1_symbol_count =   (primary_header1_symbol_count == 3'b111);
     assign max_primary_header2_symbol_count =   (primary_header2_symbol_count == 2'b11);
     assign max_data_field_symbol_count =        (data_field_symbol_count == packet_data_length_symbols);
@@ -144,6 +149,7 @@ module ppm16_demod #(
         
         increment_chip_bit_count = 1'b0;
         increment_symbol_chip_count = 1'b0;
+        increment_preamble2_symbol_count = 1'b0;
         increment_primary_header1_symbol_count = 1'b0;
         increment_primary_header2_symbol_count = 1'b0;
         increment_data_field_symbol_count = 1'b0;
@@ -156,9 +162,15 @@ module ppm16_demod #(
                 corr_input_valid = 1'b1;
                 corr_threshold = corr_threshold_ext;
             end
-            S_PREAMBLE_MATCH1, S_PREAMBLE_MATCH2: begin
+            S_PREAMBLE_MATCH1: begin
+            	increment_chip_bit_count = 1'b1;
+                increment_symbol_chip_count = 1'b1;
+                corr_input_valid = max_symbol_chip_count && max_chip_bit_count;
+            end 
+            S_PREAMBLE_MATCH2: begin
                 increment_chip_bit_count = 1'b1;
                 increment_symbol_chip_count = 1'b1;
+                increment_preamble2_symbol_count = 1'b1;
                 corr_input_valid = max_symbol_chip_count && max_chip_bit_count;
             end
             S_SFD_MATCH: begin
@@ -216,6 +228,7 @@ module ppm16_demod #(
                     && (corr_symbol == `PREAMBLE_SYMBOL)) next_state = S_PREAMBLE_MATCH2;
                 else if (max_chip_bit_count
                     && max_symbol_chip_count
+                    && max_preamble2_symbol_count
                     && (corr_symbol == `SFD0)) next_state = S_SFD_MATCH;
                 else if (max_chip_bit_count
                     && max_symbol_chip_count) next_state = S_SCAN;
@@ -270,6 +283,11 @@ module ppm16_demod #(
             data_field_symbol_count <= {(16){1'b0}};
         end else if (increment_chip_bit_count && max_chip_bit_count
                     && increment_symbol_chip_count && max_symbol_chip_count) begin
+            if (increment_preamble2_symbol_count) begin
+            	if (~max_preamble2_symbol_count) preamble2_symbol_count <= preamble2_symbol_count + 1'b1;
+            	else if (state == S_PREAMBLE_MATCH2) preamble2_symbol_count <= 3'b110;
+            	else preamble2_symbol_count <= 3'b000;
+           	end
             if (increment_primary_header1_symbol_count) primary_header1_symbol_count <= max_primary_header1_symbol_count ? 4'b0000 :
                                                                                     primary_header1_symbol_count + 1'b1;
             if (increment_primary_header2_symbol_count) primary_header2_symbol_count <= max_primary_header2_symbol_count ? 2'b00 :

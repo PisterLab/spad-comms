@@ -3,14 +3,16 @@
     Author: Lydia Lee
     Created: 2019/06/25
     Description:
-        Correlator for 16-bit pulse-position modulation. Given a threshold, finds and
+        Correlator for 16-pulse-position modulation. Given a threshold, finds and
         returns the index of the largest pulse which passes the threshold. If
         no value surpasses the threshold, threshold_unmet goes high.
         
-        0000_0000_0010_0000__0000_0000_0000_0001 -> 5_1 -> 0101_0001
+        1 count = 1 chip.
+        
+        0000_0000_0010_0000|0000_0000_0000_0001 -> 5_1 -> 0101_0001
 */
 module ppm16_correlator #(
-    parameter CHIP_BITS = 1     // Number of bits per chip
+    parameter CHIP_BITS = 1     // Number of received bits per count (log2 of the max count)
     )(
     input unsigned [CHIP_BITS-1:0]  chips_in        [15:0],
     input                           input_valid,

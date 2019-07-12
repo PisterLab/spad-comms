@@ -32,6 +32,41 @@ def gen_rx_uniform(outputFile, num_rows, chips_per_row, bits_per_chip, val=0):
 			file.write(''.join([str(val)]*chips_per_row*bits_per_chip+'\n'))
 	return
 
+
+def gen_rx_rand_pulses(outputFile, num_rows, chips_per_row, bits_per_chip,
+	p=0.1):
+	"""
+	Inputs:
+		outputFile: String. Path and name of the file to write to.
+		num_rows: Integer. Number of rows in the file. This is largely
+			intended for convenience, and it's recommended that each row
+			contain enough chips to constitute one symbol, though symbols
+			need not start at the beginning of the row (i.e. misalignment). 
+		chips_per_row: Integer. Number of chips per row. Recommend this being
+			equal to the chips per symbol for simplicity in the Verilog
+			testbench.
+		bits_per_chip: Integer. Number of bits per chip in the encoding scheme.
+		p: Probability of getting a 1 across a uniform distribution.
+	Outputs:
+		No return value. Writes to 'outputFile' where--asymptotically--there's a
+		probability 'p' of having that chip be a max'ed out pulse. Deals strictly with
+		all 0 or all 1 chips; this was intended for testing parts of the frequency
+		recovery block.
+	"""
+	with open(outputFile, 'w') as file:
+		for r in range(num_rows):
+			row_floats_unexpanded = np.random.random(chips_per_row)
+			row = []
+			for x in row_floats_unexpanded:
+				if x >= p:
+					val = 0
+				else:
+					val = 1
+				row = row + [str(val)]*bits_per_chip
+			file.write(''.join(row)+'\n')
+	return
+
+
 def gen_rx_rand_data(outputFile, num_rows, chips_per_row, chips_per_symbol, bits_per_chip,
 				preamble=[0,0,0,0], sfd0=[0,1,1,1], sfd1=[1,0,1,0],
 				p_version=[0,0,0], p_id=[1]*13, p_seqcontr=[0,1]+[0]*14,
@@ -212,10 +247,10 @@ def gen_tx_data_arb(inputFile, outputFile, channelCount, sampleRate,
 if __name__ == "__main__":
 	# Generating and transmitting a single valid data packet in the midst
 	# of random nonsense.
-	if True:
+	if False:
 		for i in range(200):
 			rx_data_specs = dict(
-				outputFile = "../verilog/binary/bleh"+str(i)+".b",
+				outputFile = "../verilog/binary/demod"+str(i)+".b",
 				num_rows = 40,
 				chips_per_row = 16,
 				chips_per_symbol = 16,
@@ -241,3 +276,15 @@ if __name__ == "__main__":
 			filterOn=False)
 			
 		gen_tx_data(**tx_arb_specs)
+	
+	# Generating a .b file with maxed out pulses separated
+	# by all zeros. Used for testing parts of frequency recovery.
+	if True:
+		rx_spaced_pulses = dict(
+			outputFile = "../verilog/binary/freq_rand.b",
+			num_rows = 40,
+			chips_per_row = 16,
+			bits_per_chip = 1,
+			p = 0.1)
+		
+		gen_rx_rand_pulses(**rx_spaced_pulses)

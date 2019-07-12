@@ -5,7 +5,7 @@
 
 # Binary files
 *.b
-*_result.txt
+*.txt
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

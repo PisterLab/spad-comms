@@ -120,15 +120,15 @@
 		        case (MODE)
 		        	MODE_SUITECHECK: begin
 		        		num_iterations = SUITECHECK_ITERATIONS;
-		        		start = "/tools/B/lydialee/camera/spad-comms/PPM/verilog/binary/bleh";
+		        		start = "/tools/B/lydialee/camera/spad-comms/PPM/verilog/binary/demod";
 		        	end
 		        	MODE_SPOTCHECK: begin 
 		        		num_iterations = 1;
-		        		start = "/tools/B/lydialee/camera/spad-comms/PPM/verilog/bleh";
+		        		start = "/tools/B/lydialee/camera/spad-comms/PPM/verilog/demod";
 		        	end
 		        	default: begin
 		        		num_iterations = 1;
-		        		start = "/tools/B/lydialee/camera/spad-comms/PPM/verilog/bleh";
+		        		start = "/tools/B/lydialee/camera/spad-comms/PPM/verilog/demod";
 		        	end
 		        endcase
 		        
@@ -312,15 +312,15 @@
 		        case (MODE)
 		        	MODE_SUITECHECK: begin
 		        		num_iterations = SUITECHECK_ITERATIONS;
-		        		start = "/tools/B/lydialee/camera/spad-comms/PPM/verilog/binary/bleh";
+		        		start = "/tools/B/lydialee/camera/spad-comms/PPM/verilog/binary/demod";
 		        	end
 		        	MODE_SPOTCHECK: begin 
 		        		num_iterations = 1;
-		        		start = "/tools/B/lydialee/camera/spad-comms/PPM/verilog/bleh";
+		        		start = "/tools/B/lydialee/camera/spad-comms/PPM/verilog/demod";
 		        	end
 		        	default: begin
 		        		num_iterations = 1;
-		        		start = "/tools/B/lydialee/camera/spad-comms/PPM/verilog/bleh";
+		        		start = "/tools/B/lydialee/camera/spad-comms/PPM/verilog/demod";
 		        	end
 		        endcase
 		        

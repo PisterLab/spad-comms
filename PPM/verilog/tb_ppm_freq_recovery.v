@@ -1,5 +1,6 @@
 `timescale 1ps/1ps
 `include "/tools/B/lydialee/camera/spad-comms/PPM/verilog/definitions.vh"
+`include "/tools/B/lydialee/camera/spad-comms/PPM/verilog/chips.vh"
 
 /*
     Author: Lydia Lee
@@ -32,14 +33,17 @@ module tb_ppm_freq_recovery();
 	/* ------------------------------------ */
 	
 	integer FILE_result;
+	integer FILE_intrasymbol_pulses;
+	integer FILE_interpulse_cycles;
 	
-	reg 					clk;
-	reg [CHIP_BITS-1:0] 	din;
-	reg [CHIP_BITS-1:0] 	pulse_threshold;
-	reg 					freq_ok;
-	reg 					resetn;
-	wire [SYMBOL_CHIPS:0] 	interpulse_cycles;
-	wire [1:0] 				intrasymbol_pulses;
+	reg 								clk;
+	reg [CHIP_BITS-1:0] 				din;
+	reg [CHIP_BITS-1:0] 				pulse_threshold;
+	reg 								freq_ok;
+	reg 								resetn;
+	wire 								pulse_detected;
+	wire [`ceilLog2(SYMBOL_CHIPS):0] 	interpulse_cycles;
+	wire [1:0] 							intrasymbol_pulses;
 	
 	always #(CLK_PERIOD/2) clk <= ~clk;
 	
@@ -50,6 +54,7 @@ module tb_ppm_freq_recovery();
 		.din(din),
 		.pulse_threshold(pulse_threshold),
 		.freq_ok(freq_ok),
+		.pulse_detected(pulse_detected),
 		.interpulse_cycles(interpulse_cycles),
 		.intrasymbol_pulses(intrasymbol_pulses),
 		.FREQ_state_SC(),
@@ -60,8 +65,7 @@ module tb_ppm_freq_recovery();
 		.FREQ_max_symbol_cycle_count_SC(),
 		.FREQ_max_interpulse_cycle_count_SC(),
 		.FREQ_increment_symbol_cycle_count_SC(),
-		.FREQ_increment_interpulse_cycles_SC(),
-		.FREQ_pulse_detected_SC());
+		.FREQ_increment_interpulse_cycle_count_SC());
 	
 	/* ----------------------------- */
 	/* ----------------------------- */
@@ -76,6 +80,9 @@ module tb_ppm_freq_recovery();
 				the number of cycles that should make up a symbol) increment
 				correctly.
 			*/
+			integer row_count;
+			integer chip_count;
+			
 			reg [CHIPS_PER_ROW*CHIP_BITS-1:0] rx_bits [NUM_ROWS-1:0];
 	        reg [CHIPS_PER_ROW*CHIP_BITS-1:0] curr_row;
 	        reg [CHIP_BITS-1:0] curr_chip;
@@ -86,11 +93,14 @@ module tb_ppm_freq_recovery();
 	        start = "/tools/B/lydialee/camera/spad-comms/PPM/verilog/binary/freq_rand";
 			$readmemb({start, ".b"}, rx_bits);
 			FILE_result = $fopen({start, "_result.txt"}, "w");
+			FILE_intrasymbol_pulses = $fopen({start, "_intrasymbolPulses.txt"}, "w");
+			FILE_interpulse_cycles = $fopen({start, "_interpulseCycles.txt"}, "w");
 			// Clean startup sequence
 			@(posedge clk);
 		    @(posedge clk);
 		    @(posedge clk);
-    	    pulse_threshold = {1'b1, {CHIP_BITS-1}{1'b0}};
+		    if (CHIP_BITS == 1) pulse_threshold = 1'b1;
+		    else pulse_threshold = {1'b1, {(CHIP_BITS-1){1'b0}}};
     	    @(posedge clk);
     	    resetn = 1'b0;
     	    @(posedge clk);
@@ -112,6 +122,8 @@ module tb_ppm_freq_recovery();
 		        row_count = row_count + 1;
 		    end
 		    $fclose(FILE_result);
+		    $fclose(FILE_interpulse_cycles);
+		    $fclose(FILE_intrasymbol_pulses);
 		end
 	endtask
 	
@@ -120,6 +132,15 @@ module tb_ppm_freq_recovery();
 			
 		end
 	endtask
+		
+	// Writing to the output files
+	always @(pulse_detected) begin
+		$fwrite(FILE_interpulse_cycles, "%d", interpulse_cycles);
+	end
+	
+	always @(intrasymbol_pulses) begin
+		$fwrite(FILE_intrasymbol_pulses, "%d", intrasymbol_pulses);
+	end
 	
 	/* -------------------------------- */
 	/* -------------------------------- */

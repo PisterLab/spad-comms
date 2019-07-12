@@ -18,7 +18,7 @@
 		/* ----------- Change These ----------- */
 		/* ------------------------------------ */
 		
-		// Chips per bit
+		// Bits per chip
 		parameter CHIP_BITS = 2;
 		
 		// Clock period
@@ -212,7 +212,7 @@
 		/* ----------- Change These ----------- */
 		/* ------------------------------------ */
 		
-		// Chips per bit
+		// Bits per chip
 		parameter CHIP_BITS = 2;
 		
 		// Clock period

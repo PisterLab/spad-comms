@@ -221,7 +221,7 @@ if __name__ == "__main__":
 				chips_per_symbol = 16,
 				bits_per_chip = 2,
 				p_datalen = [0]*15 + [1],
-				mode = 'one',
+				mode = 'rand',
 				sigma_bg=0)
 		
 			gen_rx_rand_data(**rx_data_specs)		

@@ -7,7 +7,12 @@
     	The frequency recovery portion of clock and data recovery. Assumes 
     	one chip per cycle input. Given the structure of the preamble,
     	counts the number of clock cycles between each pulse of the modulated
-    	preamble and compares it against the 
+    	preamble and (at the moment) just spits out the number of cycles between
+    	pulses (not including the endpoints--so 1001 spits out 2) and the
+    	number of pulses detected within a nominal symbol (so for 16-PPM, there should
+    	be, on average, 1 pulse every 16 cycles).
+    	
+    	At the moment, I don't have a particular method of adjusting the frequency.
 */
 
 module ppm_freq_recovery #(

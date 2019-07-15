@@ -4,8 +4,8 @@
 # Basic utility functions (namely, modulation and demodulation) used 
 # throughout the rest of the PPM code base. 
 
-import numpy as np
-import scipy as sp
+# import numpy as np
+# import scipy as sp
 # import matplotlib.pyplot as plt
 import doctest
 from math import ceil

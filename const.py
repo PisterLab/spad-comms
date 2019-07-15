@@ -6,6 +6,7 @@
 
 h = 6.6e-34 # J*s
 c = 3e8	# m/s
+import numpy as np
 
 def deg_to_rad(x):
 	"""

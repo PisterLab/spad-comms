@@ -5,12 +5,12 @@
 # simulation or using binary files to generate .arb files for the 
 # arbitrary waveform generator.
 
-import numpy as np
-import scipy as sp
+# import numpy as np
+# import scipy as sp
 # import matplotlib.pyplot as plt
 import doctest
 from math import ceil
-from ppm_base import ppm_mod_vals, ppm_mod_bits
+# from ppm_base import ppm_mod_vals, ppm_mod_bits
 
 def gen_rx_uniform(outputFile, num_rows, chips_per_row, bits_per_chip, val=0):
 	"""

@@ -1,12 +1,12 @@
 # Lydia Lee
 # Created 2019/07/01
 
-import numpy as np
-import scipy as sp
+# import numpy as np
+# import scipy as sp
 # import matplotlib.pyplot as plt
 import doctest
 from math import ceil
-from ppm_base import ppm_demod_bits_vals
+# from ppm_base import ppm_demod_bits_vals
 
 def rx_ppm_packet_vals(inputFile, chips_per_symbol, bits_per_chip,
 				preamble_val=0, sfd0_val=7, sfd1_val=10,

@@ -4,6 +4,8 @@
 # Contains equations for calculating losses due to pointing error
 # with a Gaussian beam.
 
+import numpy as np
+
 def intensity_position(r=1, mu=0, sigma=1):
     """
     Inputs:
@@ -49,6 +51,7 @@ def calc_sigma(z, M=None, lamb=None, n=None, w_0=None, theta_e2=None):
         lamb: Wavelength in meters.
         n: Index of refraction.
         w_0: Beam waist radius in meters.
+        theta_e2: Half-angle of the beam divergence in radians.
     Outputs:
         Standard deviation of the Gaussian of intensity at a given 
         distance.
